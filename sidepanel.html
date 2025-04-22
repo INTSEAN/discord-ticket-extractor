@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Conversations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Slackside+One&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --discord-purple: #5865F2;
+      --discord-light: #f6f6f7;
+      --discord-dark: #36393f;
+    }
+    
+    body {
+      font-family: 'Slackside One', cursive;
+      margin: 0;
+      padding: 0;
+      background-color: var(--discord-dark);
+      color: var(--discord-light);
+      width: 100%;
+      height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    header {
+      background-color: var(--discord-purple);
+      padding: 16px;
+      text-align: center;
+      font-size: 18px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    
+    .conversation-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .conversation-controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    
+    .conversation-items {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .conversation-item {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 12px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    .username {
+      color: var(--discord-purple);
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+    
+    .message {
+      margin-bottom: 4px;
+    }
+    
+    .timestamp {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.5);
+      text-align: right;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    button {
+      background-color: var(--discord-purple);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Slackside One', cursive;
+      transition: background-color 0.2s;
+      margin-top: 10px;
+    }
+    
+    button:hover {
+      background-color: #4752c4;
+    }
+    
+    .copy-feedback {
+      position: absolute;
+      bottom: -30px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #4CAF50;
+      font-size: 14px;
+      opacity: 0.9;
+      display: none;
+      animation: fadeInOut 2s ease-in-out;
+    }
+    
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      20% { opacity: 0.9; }
+      80% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+    
+    .debug-info {
+      background-color: rgba(0, 0, 0, 0.3);
+      padding: 8px;
+      margin-top: 10px;
+      font-size: 15px;
+      display: none;
+    }
+    
+    .debug-toggle {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.3);
+      text-align: center;
+      cursor: pointer;
+      padding: 8px;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      Discord Conversations
+    </header>
+    <div class="content">
+      <div id="conversations" class="conversation-list">
+        <div class="empty-state">
+          <p>No conversations found</p>
+          <p>Visit a Discord page with embedded conversations</p>
+          <button id="refresh-btn">Refresh</button>
+        </div>
+      </div>
+      <div class="debug-toggle" id="debug-toggle">Show debug info</div>
+      <div class="debug-info" id="debug-info">Loading...</div>
+    </div>
+  </div>
+  
+  <script>
+    // Simple debug toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const debugToggle = document.getElementById('debug-toggle');
+      const debugInfo = document.getElementById('debug-info');
+      
+      if (debugToggle && debugInfo) {
+        debugToggle.addEventListener('click', function() {
+          if (debugInfo.style.display === 'block') {
+            debugInfo.style.display = 'none';
+            debugToggle.textContent = 'Show debug info';
+          } else {
+            debugInfo.style.display = 'block';
+            debugToggle.textContent = 'Hide debug info';
+            
+            // Update debug info
+            const browserInfo = navigator.userAgent;
+            const manifestVersion = chrome.runtime.getManifest().manifest_version;
+            const extensionId = chrome.runtime.id;
+            
+            debugInfo.innerHTML = `
+              <p>Browser: ${browserInfo}</p>
+              <p>Manifest Version: ${manifestVersion}</p>
+              <p>Extension ID: ${extensionId}</p>
+              <p>Side Panel API available: ${!!chrome.sidePanel}</p>
+              <p>Supports tickettool.xyz detection: Yes</p>
+            `;
+          }
+        });
+      }
+    });
+  </script>
+  
+  <script src="src/sidepanel.js"></script>
+</body>
+</html> 

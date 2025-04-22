@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "Discord Conversation Extractor",
+  "description": "Extract and display conversations from Discord embeds",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "src/assets/discord_16.png",
+      "48": "src/assets/discord_48.png",
+      "128": "src/assets/discord_128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage",
+    "sidePanel",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "https://*.discord.com/*",
+    "https://tickettool.xyz/*",
+    "https://api.tickettool.xyz/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.discord.com/*",
+        "https://tickettool.xyz/transcript*",
+        "https://api.tickettool.xyz/api/legacy/transcript*"
+      ],
+      "js": ["src/helpers.js", "src/contentScript.js"],
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/assets/discord.svg"],
+      "matches": ["https://tickettool.xyz/*", "https://api.tickettool.xyz/*"]
+    }
+  ],
+  "icons": {
+    "16": "src/assets/discord_16.png",
+    "48": "src/assets/discord_48.png",
+    "128": "src/assets/discord_128.png"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
+} 

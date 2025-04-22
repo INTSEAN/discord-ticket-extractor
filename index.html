@@ -2,12 +2,200 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/src/assets/discord_16.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>Discord Conversation Extractor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Slackside+One&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --discord-purple: #5865F2;
+        --discord-light: #f6f6f7;
+        --discord-dark: #36393f;
+      }
+      
+      body {
+        width: 350px;
+        height: 400px;
+        margin: 0;
+        padding: 0;
+        font-family: 'Slackside One', cursive;
+        background-color: var(--discord-dark);
+        color: var(--discord-light);
+      }
+      
+      #root {
+        width: 100%;
+        height: 100%;
+      }
+      
+      .popup-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      
+      header {
+        background-color: var(--discord-purple);
+        padding: 16px;
+        text-align: center;
+        font-size: 18px;
+      }
+      
+      .content {
+        flex: 1;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+      }
+      
+      button {
+        background-color: var(--discord-purple);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: 'Slackside One', cursive;
+        font-size: 16px;
+        transition: background-color 0.2s;
+        width: 100%;
+        max-width: 250px;
+      }
+      
+      button:hover {
+        background-color: #4752c4;
+      }
+      
+      .info-text {
+        text-align: center;
+        line-height: 1.5;
+      }
+      
+      .status-message {
+        color: #4CAF50;
+        font-size: 14px;
+        text-align: center;
+        margin-top: 10px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      
+      .status-message.visible {
+        opacity: 1;
+      }
+      
+      .status-message.error {
+        color: #F44336;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div class="popup-container">
+      <header>
+        Discord Conversation Extractor
+      </header>
+      <div class="content">
+        <img src="src/assets/discord_icon.png" alt="Discord Logo" width="64" />
+        <p class="info-text">Extract and view conversations from Discord embeds</p>
+        <button id="open-panel-btn">Open Side Panel</button>
+        <button id="extract-btn">Extract Conversations</button>
+        <p id="status-message" class="status-message"></p>
+      </div>
+    </div>
+    
+    <script type="module">
+      document.addEventListener('DOMContentLoaded', function() {
+        const statusMessage = document.getElementById('status-message');
+        
+        function showStatus(message, isError = false) {
+          statusMessage.textContent = message;
+          statusMessage.classList.add('visible');
+          
+          if (isError) {
+            statusMessage.classList.add('error');
+          } else {
+            statusMessage.classList.remove('error');
+          }
+          
+          setTimeout(() => {
+            statusMessage.classList.remove('visible');
+          }, 3000);
+        }
+        
+        // Open side panel button
+        document.getElementById('open-panel-btn').addEventListener('click', function() {
+          try {
+            // Try the direct API first
+            if (chrome.sidePanel) {
+              chrome.sidePanel.open()
+                .then(() => {
+                  showStatus('Side panel opened!');
+                })
+                .catch(err => {
+                  console.error('Error opening side panel directly:', err);
+                  
+                  // Fall back to message-based approach
+                  chrome.runtime.sendMessage({ action: 'openSidePanel' }, response => {
+                    if (response && response.success) {
+                      showStatus('Side panel opened!');
+                    } else {
+                      showStatus('Could not open side panel', true);
+                    }
+                  });
+                });
+            } else {
+              // Fall back to message-based approach
+              chrome.runtime.sendMessage({ action: 'openSidePanel' }, response => {
+                if (response && response.success) {
+                  showStatus('Side panel opened!');
+                } else {
+                  showStatus('Could not open side panel', true);
+                }
+              });
+            }
+          } catch (err) {
+            console.error('Error opening side panel:', err);
+            showStatus('Could not open side panel', true);
+          }
+        });
+        
+        // Extract conversations button
+        document.getElementById('extract-btn').addEventListener('click', function() {
+          chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            if (tabs[0]) {
+              chrome.tabs.sendMessage(tabs[0].id, { action: 'getConversations' }, function(response) {
+                if (chrome.runtime.lastError) {
+                  showStatus('Error: No Discord conversations found', true);
+                  return;
+                }
+                
+                if (response && response.conversations && response.conversations.length > 0) {
+                  chrome.runtime.sendMessage({
+                    action: 'saveConversations',
+                    data: response.conversations
+                  });
+                  
+                  showStatus(`Found ${response.conversations.length} conversations!`);
+                  
+                  // Open side panel to show results
+                  setTimeout(() => {
+                    chrome.runtime.sendMessage({ action: 'openSidePanel' });
+                  }, 500);
+                } else {
+                  showStatus('No Discord conversations found', true);
+                }
+              });
+            } else {
+              showStatus('No active tab found', true);
+            }
+          });
+        });
+      });
+    </script>
   </body>
 </html>
