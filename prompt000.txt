@@ -1,3 +1,10 @@
+Ignore any previous versions of the files: background.js, eslint.config.js, vite.config.js, manifest.json
+
+Below is the current state of the codebase file-by-file.
+===========================================================================.
+
+File 'background.js':
+```
 /**
  * Background script for Discord Conversation Extractor (Service Worker in Manifest V3)
  * Handles background operations, data storage, and communication between components
@@ -113,17 +120,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
     sendResponse({ success: true });
   }
-
-  // clear history function
-  if (message.action === 'clearHistory') {
-    chrome.storage.local.set({ history: [] }, () => {
-      console.log('History cleared.');
-      
-      // Notify other parts (e.g., side panel) that history was cleared
-      chrome.runtime.sendMessage({ action: 'historyCleared' });
-    });
-    sendResponse({ success: true });
-  }
   
   
   if (message.action === 'getStoredConversations') {
@@ -165,3 +161,169 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   return true; // Keep channel open by default
 }); 
+```
+
+File 'eslint.config.js':
+```
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+
+export default [
+  { ignores: ['dist'] },
+  {
+    files: ['**/*.{js,jsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  },
+]
+
+```
+
+File 'vite.config.js':
+```
+import { defineConfig } from 'vite'
+import { resolve } from 'path'
+import { writeFileSync, copyFileSync, mkdirSync, existsSync } from 'fs'
+
+// https://vite.dev/config/
+export default defineConfig({
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        sidepanel: resolve(__dirname, 'sidepanel.html')
+      }
+    }
+  },
+  plugins: [
+    {
+      name: 'generate-chrome-extension-files',
+      closeBundle() {
+        // Ensure the dist/src directory exists
+        const srcDir = resolve(__dirname, 'dist/src');
+        if (!existsSync(srcDir)) {
+          mkdirSync(srcDir, { recursive: true });
+        }
+        
+        // Copy the manifest.json file
+        copyFileSync(resolve(__dirname, 'manifest.json'), resolve(__dirname, 'dist/manifest.json'));
+        
+        // Copy the content script and helpers (helpers first)
+        copyFileSync(resolve(__dirname, 'src/helpers.js'), resolve(__dirname, 'dist/src/helpers.js'));
+        copyFileSync(resolve(__dirname, 'src/contentScript.js'), resolve(__dirname, 'dist/src/contentScript.js'));
+        copyFileSync(resolve(__dirname, 'src/sidepanel.js'), resolve(__dirname, 'dist/src/sidepanel.js'));
+        
+        // Copy background.js from root directory instead of generating it
+        copyFileSync(resolve(__dirname, 'background.js'), resolve(__dirname, 'dist/background.js'));
+        
+        // Create assets directory and copy icons
+        const assetsDir = resolve(__dirname, 'dist/src/assets');
+        if (!existsSync(assetsDir)) {
+          mkdirSync(assetsDir, { recursive: true });
+        }
+        
+        // Copy icon files if they exist
+        const iconFiles = ['discord_16.png', 'discord_48.png', 'discord_128.png', 'discord_icon.png'];
+        iconFiles.forEach(icon => {
+          const iconPath = resolve(__dirname, `src/assets/${icon}`);
+          if (existsSync(iconPath)) {
+            copyFileSync(
+              iconPath, 
+              resolve(__dirname, `dist/src/assets/${icon}`)
+            );
+          }
+        });
+        
+        console.log('Chrome Extension build completed successfully!');
+      }
+    }
+  ]
+})
+
+```
+
+File 'manifest.json':
+```
+{
+  "manifest_version": 3,
+  "name": "Discord Conversation Extractor",
+  "description": "Extract and display conversations from Discord embeds",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "src/assets/discord_16.png",
+      "48": "src/assets/discord_48.png",
+      "128": "src/assets/discord_128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage",
+    "sidePanel",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "https://*.discord.com/*",
+    "https://tickettool.xyz/*",
+    "https://api.tickettool.xyz/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.discord.com/*",
+        "https://tickettool.xyz/transcript*",
+        "https://api.tickettool.xyz/api/legacy/transcript*"
+      ],
+      "js": ["src/helpers.js", "src/contentScript.js"],
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/assets/discord.svg"],
+      "matches": ["https://tickettool.xyz/*", "https://api.tickettool.xyz/*"]
+    }
+  ],
+  "icons": {
+    "16": "src/assets/discord_16.png",
+    "48": "src/assets/discord_48.png",
+    "128": "src/assets/discord_128.png"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
+} 
+```
+
+===========================================================================.
+
