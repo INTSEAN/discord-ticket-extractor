@@ -28,8 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // call it once now…
-  wireClearButton();
 
 
 
@@ -80,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
               <span class="toggle-label">Auto-refresh (5m)</span>
             </label>
           </div>
-          <button id="clear-history-btn" class="secondary-button">Clear history</button>
         </div>
       `;
       document.getElementById('refresh-btn').addEventListener('click', loadConversations);
@@ -161,13 +158,6 @@ document.addEventListener('DOMContentLoaded', function() {
               <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
             </svg>
           </button>
-          <button id="clear-history-btn" class="icon-button" title="Clear history">
-            <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-            </svg>
-          </button>
-
-
         </div>
       </div>
       <div class="settings-option">
