@@ -17,6 +17,20 @@ document.addEventListener('DOMContentLoaded', function() {
   let lastRefreshTime = 0;
   let autoRefreshIntervalId = null;
   
+  // function to clear history
+  function wireClearButton() {
+    const btn = document.getElementById('clear-history-btn');
+    if (!btn) return;                     // header may be rebuilt later
+    btn.addEventListener('click', () => {
+      if (confirm('Delete every saved ticket?')) {
+        chrome.runtime.sendMessage({ action: 'clearHistory' });
+      }
+    });
+  }
+
+
+
+
   /**
    * Renders conversation data in the side panel UI
    * Creates conversation cards, adds copy functionality, and handles empty states
@@ -914,7 +928,11 @@ document.addEventListener('DOMContentLoaded', function() {
    */
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('Side panel received message:', message);
-    if (message.action === 'conversationsUpdated') {
+    if (message.action === 'historyCleared') {
+      lastRefreshTime = 0;            // force UI-refresh
+      loadConversations();
+      showToast('History cleared');   // optional helper if you have a toast util
+    } else if (message.action === 'conversationsUpdated') {
       // Only refresh if it's been at least 2 seconds since the last refresh
       // This prevents rapid-fire refreshes if multiple messages arrive quickly
       const timeSinceLastRefresh = Date.now() - lastRefreshTime;

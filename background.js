@@ -84,28 +84,47 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Message received:', message);
   
   if (message.action === 'saveConversations' && message.data) {
-    // Store conversations
     const conversationsData = message.data.conversations || message.data;
-    
-    // Log the data we're saving for debugging
+  
     console.log('Saving conversations data:', conversationsData);
-    
-    // Fix: Store the extracted conversations
-    conversations = conversationsData;
-    
-    // Save to persistent storage
+  
+    // Save current conversations (for UI use, etc.)
     chrome.storage.local.set({ conversations: conversationsData }, () => {
-      console.log('Conversations saved to storage');
-      
-      // Notify side panel that new data is available
-      chrome.runtime.sendMessage({
-        action: 'conversationsUpdated'
+      console.log('Current conversations saved.');
+    });
+  
+    // Update history
+    chrome.storage.local.get(['history'], (result) => {
+      const previousHistory = result.history || [];
+      const newHistory = [...previousHistory, ...conversationsData.map(c => ({
+        username: c.username,
+        content: c.content,
+        timestamp: c.timestamp,
+        server_name: c.serverName || '' // Ensure it's renamed to match your spec
+      }))];
+  
+      chrome.storage.local.set({ history: newHistory }, () => {
+        console.log('History updated with new ticket entries.');
+  
+        // Notify other parts (e.g., side panel) that conversations were updated
+        chrome.runtime.sendMessage({ action: 'conversationsUpdated' });
       });
     });
-    
-    // Send response
+  
     sendResponse({ success: true });
   }
+
+  // clear history function
+  if (message.action === 'clearHistory') {
+    chrome.storage.local.set({ history: [] }, () => {
+      console.log('History cleared.');
+      
+      // Notify other parts (e.g., side panel) that history was cleared
+      chrome.runtime.sendMessage({ action: 'historyCleared' });
+    });
+    sendResponse({ success: true });
+  }
+  
   
   if (message.action === 'getStoredConversations') {
     // Get from storage and send
