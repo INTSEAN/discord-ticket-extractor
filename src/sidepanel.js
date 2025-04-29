@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Track last update time to prevent excessive refreshes
   let lastRefreshTime = 0;
   let autoRefreshIntervalId = null;
-  
+
   // function to clear history
   function wireClearButton() {
     const btn = document.getElementById('clear-history-btn');
@@ -27,9 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-
-
-
 
   /**
    * Renders conversation data in the side panel UI
@@ -65,12 +62,14 @@ document.addEventListener('DOMContentLoaded', function() {
               <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" fill="rgba(88, 101, 242, 0.3)"/>
             </svg>
           </div>
-          <h3 class="luxury-heading">No Conversations Yet</h3>
-          <p>Visit a Discord page with embedded conversations to extract messages</p>
+          <h3 class="luxury-heading">No Transcript Opened</h3>
+          <p>Open your ticket tool transcript in your browser to extract messages!</p>
           <div class="button-group">
             <button id="refresh-btn" class="primary-button">Refresh</button>
             <button id="debug-btn" class="secondary-button">Debug Info</button>
           </div>
+          <button id="history-btn" class="icon-button" title="View History">📜</button>
+
           <div class="settings-option">
             <label class="toggle-switch">
               <input type="checkbox" id="auto-refresh-toggle" ${autoRefreshIntervalId ? 'checked' : ''}>
@@ -80,6 +79,13 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       `;
+      // load history when history icon is clicked
+      const historyBtn = document.getElementById('history-btn');
+
+      if (historyBtn) {
+        historyBtn.addEventListener('click', loadHistory);
+      }
+
       document.getElementById('refresh-btn').addEventListener('click', loadConversations);
       
       // Add auto-refresh toggle handler
@@ -131,6 +137,27 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
+    // Add toolbar div
+    const toolbarDiv = document.createElement('div');
+    toolbarDiv.className = 'toolbar';
+    toolbarDiv.innerHTML = `
+      <div class="header-controls">
+        <button id="copy-all-btn" class="icon-button" title="Copy All"> Copy All
+          <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+          </svg>
+        </button>
+        <button id="refresh-btn" class="icon-button" title="Refresh">
+          <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+        </button>
+
+        <button id="history-btn" class="icon-button" title="View History">📜</button>
+      </div>
+    `;
+    conversationsElement.appendChild(toolbarDiv);
+
     // Add header with controls for the conversations
     const headerDiv = document.createElement('div');
     headerDiv.className = 'panel-header';
@@ -147,18 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
           ${channelName ? `<div class="channel-name">#${escapeHtml(channelName)}</div>` : ''}
           <div class="last-update">Updated at ${timestamp}</div>
         </div>
-        <div class="header-controls">
-          <button id="copy-all-btn" class="icon-button" title="Copy All">
-            <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-            </svg>
-          </button>
-          <button id="refresh-btn" class="icon-button" title="Refresh">
-            <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-            </svg>
-          </button>
-        </div>
+        
       </div>
       <div class="settings-option">
         <label class="toggle-switch">
@@ -170,6 +186,9 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="copy-feedback" id="copy-feedback">Copied to clipboard!</div>
     `;
     conversationsElement.appendChild(headerDiv);
+
+    const historyBtn = document.getElementById('history-btn');
+    if (historyBtn) historyBtn.addEventListener('click', loadHistory);
     
     // Add auto-refresh toggle handler
     const autoRefreshToggle = document.getElementById('auto-refresh-toggle');
@@ -233,7 +252,31 @@ document.addEventListener('DOMContentLoaded', function() {
       refreshBtn.addEventListener('click', loadConversations);
     }
   }
-  
+
+  /**
+   * Renders empty history home page when there is no history to show.
+   */
+  function renderHistoryHomePage() {
+    console.log('Rendering empty history home page');
+
+    conversationsElement.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" fill="rgba(88, 101, 242, 0.3)"/>
+          </svg>
+        </div>
+        <h3 class="luxury-heading">No History</h3>
+        <p>Your transcript history is empty ~</p>
+        <div class="button-group">
+          <button id="back-btn" class="primary-button">Back</button>
+        </div>
+      </div>
+    `;
+
+    wireBackButton();
+  }
+
   /**
    * Adds luxury fonts to the document
    */
@@ -377,6 +420,8 @@ document.addEventListener('DOMContentLoaded', function() {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
       }
       
       .header-text h2 {
@@ -397,12 +442,52 @@ document.addEventListener('DOMContentLoaded', function() {
         color: var(--discord-muted);
         font-style: italic;
       }
-      
-      .header-controls {
+
+      /* Toolbar button cards */
+      .toolbar {
         display: flex;
-        gap: 8px;
+        flex-direction: row;
+        justify-content: center;   /* center icons horizontally */
+        align-items: center;       /* center icons vertically */
+        gap: 12px;                 /* space between buttons */
+        width: 100%;               /* span the full panel width */
+        padding: 8px 0;            /* optional vertical padding */
       }
-      
+
+      .toolbar .icon-button {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      }
+
+      /* Icon size inside the button */
+      .toolbar .icon-button svg {
+        width: 20px;
+        height: 20px;
+        fill: var(--luxury-gold);
+      }
+
+      /* Hover effect */
+      .toolbar .icon-button:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Active/pressed effect */
+      .toolbar .icon-button:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+      }
+
       .settings-option {
         margin-top: 12px;
       }
@@ -912,6 +997,81 @@ document.addEventListener('DOMContentLoaded', function() {
       autoRefreshIntervalId = null;
     }
   }
+
+  function loadHistory() {
+    console.log('Loading history from storage');
+
+    showLoading();
+    chrome.storage.local.get(['history'], result => {
+      const history = result.history || [];
+      lastRefreshTime = Date.now();
+  
+      if (history.length > 0) {
+        renderHistory(history);
+      } else {
+        renderHistoryHomePage();
+      }
+  
+      hideLoading();
+    });
+  }  
+
+  function renderHistory(history) {
+    console.log('Rendering history:', history);
+    // clear existing panel
+    conversationsElement.innerHTML = '';
+  
+    // header for history (reuse server/channel blank)
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'panel-header';
+    headerDiv.innerHTML = `
+      <div class="header-content">
+        <h2 class="luxury-heading">Extraction History</h2>
+        <button id="clear-history-btn" class="icon-button" title="Clear History">🗑️</button>
+      </div>
+    `;
+    conversationsElement.appendChild(headerDiv);
+    wireClearButton();  // reuse your clear-history wiring
+  
+    if (history.length === 0) {
+      const empty = document.createElement('p');
+      empty.textContent = 'No tickets in history.';
+      empty.className = 'empty-state';
+      conversationsElement.appendChild(empty);
+      return;
+    }
+  
+    // list out each history entry
+    const list = document.createElement('div');
+    list.className = 'conversation-items';
+    history.forEach(entry => {
+      const item = document.createElement('div');
+      item.className = 'conversation-item';
+      item.innerHTML = `
+        <div class="message-header">
+          <div class="username">${escapeHtml(entry.username)}</div>
+          <div class="timestamp">${escapeHtml(entry.timestamp)}</div>
+        </div>
+        <div class="message-content">
+          <strong>${escapeHtml(entry.server_name)}:</strong>
+          ${escapeHtml(entry.content)}
+        </div>
+      `;
+      list.appendChild(item);
+    });
+    conversationsElement.appendChild(list);
+  }
+
+  function wireBackButton() {
+    const btn = document.getElementById('back-btn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      // return to main view
+      loadConversations();
+    });
+  }
+  
+  
   
   // Listen for refresh button clicks
   if (refreshButton) {
