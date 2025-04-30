@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (copyWithPromptBtn) {
       copyWithPromptBtn.addEventListener('click', () => {
-        const formattedText = formatConversationsForClipboard(conversations);
+        const formattedText = formatConversationsForClipboard(conversations, 'prompt');
         handleCopy(formattedText);
       });
     }
@@ -824,27 +824,32 @@ document.addEventListener('DOMContentLoaded', function() {
    * @param {Array<Object>} conversations - Array of conversation objects
    * @returns {string} Formatted text ready for clipboard
    */
-  function formatConversationsForClipboard(conversations) {
+  function formatConversationsForClipboard(conversations, promptType = null) {
     if (!conversations || !Array.isArray(conversations) || conversations.length === 0) {
       return '';
     }
-    
-    // Add server and channel info at the beginning if available
+  
     let result = '';
+    if (promptType === 'prompt') {
+      result += 'You are an assistant helping server admins, support moderators, ' +
+      'community managers, and HR personnel quickly summarize ticket conversations ' +
+      'for documentation, reporting, or follow-up.\n\n' +
+      'Below is a formatted transcript of a ticket interaction. Your task is to generate ' +
+      'a concise and professional summary of the interaction, including the purpose of the ticket, ' +
+      'any relevant actions or replies, and whether any follow-up is required:\n\n';
+    }
+  
     const firstConv = conversations[0];
-    
-    if (firstConv.serverName) {
-      result += `Server: ${firstConv.serverName}\n`;
-    }
-    
-    if (firstConv.channelName) {
-      result += `Channel: ${firstConv.channelName}\n\n`;
-    }
-    
-    return result + conversations.map(conv => 
+    if (firstConv.serverName) result += `Server: ${firstConv.serverName}\n`;
+    if (firstConv.channelName) result += `Channel: ${firstConv.channelName}\n\n`;
+  
+    result += conversations.map(conv => 
       `${conv.username}: ${conv.content} sent at "${conv.timestamp}"`
     ).join('\n');
+  
+    return result;
   }
+  
   
   /**
    * Copies text to the system clipboard
