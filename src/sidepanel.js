@@ -147,9 +147,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
           </svg>
         </button>
-        <button id="copy-with-prompt-btn" class="icon-button" title="Copy with Prompt"> Copy + Prompt
+        <button id="copy-with-prompt-btn" class="icon-button wide-button" title="Copy with Prompt">
+          <span>Copy + Prompt</span>
           <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
-           <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
           </svg>
         </button>
         <button id="refresh-btn" class="icon-button" title="Refresh">
@@ -470,6 +471,15 @@ document.addEventListener('DOMContentLoaded', function() {
         width: 100%;               /* span the full panel width */
         padding: 8px 0;            /* optional vertical padding */
       }
+      
+      .header-controls {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap; /* optional: makes sure buttons wrap nicely if window is narrow */
+      }
 
       .toolbar .icon-button {
         width: 40px;
@@ -614,6 +624,13 @@ document.addEventListener('DOMContentLoaded', function() {
         box-shadow: 0 0 8px rgba(197, 164, 126, 0.3);
       }
       
+      .wide-button {
+        min-width: 120px;
+        padding: 0 12px;
+        justify-content: space-between; /* ensures text and icon are spaced */
+        gap: 6px; /* adds a small gap between text and icon */
+      }
+         
       .button-group {
         display: flex;
         gap: 8px;
