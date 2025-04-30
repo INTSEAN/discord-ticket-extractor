@@ -147,6 +147,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
           </svg>
         </button>
+        <button id="copy-with-prompt-btn" class="icon-button" title="Copy with Prompt"> Copy + Prompt
+          <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
+           <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+          </svg>
+        </button>
         <button id="refresh-btn" class="icon-button" title="Refresh">
           <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -226,23 +231,35 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add copy functionality
     const copyAllBtn = document.getElementById('copy-all-btn');
+    const copyWithPromptBtn = document.getElementById('copy-with-prompt-btn');
     const copyFeedback = document.getElementById('copy-feedback');
+    
+    function handleCopy(text) {
+      copyToClipboard(text).then(success => {
+        if (success && copyFeedback) {
+          copyFeedback.style.display = 'block';
+          copyFeedback.classList.add('show');
+          setTimeout(() => {
+            copyFeedback.classList.remove('show');
+            setTimeout(() => {
+              copyFeedback.style.display = 'none';
+            }, 300);
+          }, 2000);
+        }
+      });
+    }
     
     if (copyAllBtn) {
       copyAllBtn.addEventListener('click', () => {
         const formattedText = formatConversationsForClipboard(conversations);
-        copyToClipboard(formattedText).then(success => {
-          if (success && copyFeedback) {
-            copyFeedback.style.display = 'block';
-            copyFeedback.classList.add('show');
-            setTimeout(() => {
-              copyFeedback.classList.remove('show');
-              setTimeout(() => {
-                copyFeedback.style.display = 'none';
-              }, 300);
-            }, 2000);
-          }
-        });
+        handleCopy(formattedText);
+      });
+    }
+    
+    if (copyWithPromptBtn) {
+      copyWithPromptBtn.addEventListener('click', () => {
+        const formattedText = formatConversationsForClipboard(conversations);
+        handleCopy(formattedText);
       });
     }
     
