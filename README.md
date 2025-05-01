@@ -1,15 +1,38 @@
-# Chrome Extension with React + Vite
+# Chrome Extension: Discord Ticket Extractor
 
 > **Landing Page:** [Visit here](https://junieguo.github.io/discord-ticket-extractor-landing-page/)
+> **Demo Video:** [Visit here](https://youtu.be/OLsjDF6k23Y)
 
-A Chrome Extension built with React and Vite, using Manifest V3.
+## Description
+
+Our Chrome extension transforms lengthy Discord ticket conversations into clean, ready-to-use text for LLMs like ChatGPT. As soon as you open a Ticket Tool transcript in your browser, it automatically strips out system messages, emotes, and other noise and copies the refined conversation to your clipboard. With one-click preset prompts—such as summarization or action‐item extraction—you can instantly prepare your data for analysis or follow-up. Plus, a built-in history panel lets you quickly search and retrieve past transcripts by title, saving moderators and community managers valuable time. This Chrome Extension is built with React and Vite, using Manifest V3.
+
+## Setup Instruction
+
+1. Open Chrome and navigate to `chrome://extensions/`
+2. Enable "Developer mode" by toggling the switch in the top right corner
+3. Click "Load unpacked" and select the `dist` directory from this project
+4. The extension should now be installed and visible in your Chrome toolbar
 
 ## Features
 
-- Modern React setup with Vite for fast development
-- Chrome Extension Manifest V3 compliant
-- Background service worker
-- Popup interface with Chrome API integration
+- Auto detection + conversation extraction (Sean)
+- One-click copy to clipboard with preset prompt (Junie)
+- History page for past transcripts (Cecilia + Garret)
+- Search engine in history (WIP, Cecilia + Garret)
+
+## Known Bugs
+
+1. Clearing history in the history view does not clear the current conversations displayed in the main sidebar view. Even when you close out of Chrome, the data persists.
+2. Need to improve the History page UI. Currently, our extension combines all extracted messages and displays them in the same view.
+3. The current code base uses vanilla JavaScript for rendering views. We plan to work on refactoring our code into React during the exam period.
+
+## Future Work
+
+1. Add more preset prompts.
+2. Enhance the UI for feedback message after copying to clipboard.
+3. Search bar in History view.
+4. Refactored codebase using React, if time allows.
 
 ## Development
 
@@ -30,12 +53,7 @@ npm run build
 
 After building, the `dist` directory will contain the extension ready for loading into Chrome.
 
-## Loading the Extension in Chrome
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable "Developer mode" by toggling the switch in the top right corner
-3. Click "Load unpacked" and select the `dist` directory from this project
-4. The extension should now be installed and visible in your Chrome toolbar
 
 ## Challenges Faced
 
