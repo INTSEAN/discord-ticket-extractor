@@ -137,27 +137,6 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    // Add toolbar div
-    const toolbarDiv = document.createElement('div');
-    toolbarDiv.className = 'toolbar';
-    toolbarDiv.innerHTML = `
-      <div class="header-controls">
-        <button id="copy-all-btn" class="icon-button" title="Copy All"> Copy All
-          <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-          </svg>
-        </button>
-        <button id="refresh-btn" class="icon-button" title="Refresh">
-          <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-          </svg>
-        </button>
-
-        <button id="history-btn" class="icon-button" title="View History">📜</button>
-      </div>
-    `;
-    conversationsElement.appendChild(toolbarDiv);
-
     // Add header with controls for the conversations
     const headerDiv = document.createElement('div');
     headerDiv.className = 'panel-header';
@@ -226,23 +205,35 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add copy functionality
     const copyAllBtn = document.getElementById('copy-all-btn');
+    const copyWithPromptBtn = document.getElementById('copy-with-prompt-btn');
     const copyFeedback = document.getElementById('copy-feedback');
+    
+    function handleCopy(text) {
+      copyToClipboard(text).then(success => {
+        if (success && copyFeedback) {
+          copyFeedback.style.display = 'block';
+          copyFeedback.classList.add('show');
+          setTimeout(() => {
+            copyFeedback.classList.remove('show');
+            setTimeout(() => {
+              copyFeedback.style.display = 'none';
+            }, 300);
+          }, 2000);
+        }
+      });
+    }
     
     if (copyAllBtn) {
       copyAllBtn.addEventListener('click', () => {
         const formattedText = formatConversationsForClipboard(conversations);
-        copyToClipboard(formattedText).then(success => {
-          if (success && copyFeedback) {
-            copyFeedback.style.display = 'block';
-            copyFeedback.classList.add('show');
-            setTimeout(() => {
-              copyFeedback.classList.remove('show');
-              setTimeout(() => {
-                copyFeedback.style.display = 'none';
-              }, 300);
-            }, 2000);
-          }
-        });
+        handleCopy(formattedText);
+      });
+    }
+    
+    if (copyWithPromptBtn) {
+      copyWithPromptBtn.addEventListener('click', () => {
+        const formattedText = formatConversationsForClipboard(conversations, 'prompt');
+        handleCopy(formattedText);
       });
     }
     
@@ -442,50 +433,10 @@ document.addEventListener('DOMContentLoaded', function() {
         color: var(--discord-muted);
         font-style: italic;
       }
-
-      /* Toolbar button cards */
-      .toolbar {
+      
+      .header-controls {
         display: flex;
-        flex-direction: row;
-        justify-content: center;   /* center icons horizontally */
-        align-items: center;       /* center icons vertically */
-        gap: 12px;                 /* space between buttons */
-        width: 100%;               /* span the full panel width */
-        padding: 8px 0;            /* optional vertical padding */
-      }
-
-      .toolbar .icon-button {
-        width: 40px;
-        height: 40px;
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-        
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        
-        transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-      }
-
-      /* Icon size inside the button */
-      .toolbar .icon-button svg {
-        width: 20px;
-        height: 20px;
-        fill: var(--luxury-gold);
-      }
-
-      /* Hover effect */
-      .toolbar .icon-button:hover {
-        background-color: rgba(255, 255, 255, 0.15);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-      }
-
-      /* Active/pressed effect */
-      .toolbar .icon-button:active {
-        transform: translateY(0);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        gap: 8px;
       }
 
       .settings-option {
@@ -597,6 +548,13 @@ document.addEventListener('DOMContentLoaded', function() {
         box-shadow: 0 0 8px rgba(197, 164, 126, 0.3);
       }
       
+      .wide-button {
+        min-width: 120px;
+        padding: 0 12px;
+        justify-content: space-between; /* ensures text and icon are spaced */
+        gap: 6px; /* adds a small gap between text and icon */
+      }
+         
       .button-group {
         display: flex;
         gap: 8px;
@@ -807,27 +765,32 @@ document.addEventListener('DOMContentLoaded', function() {
    * @param {Array<Object>} conversations - Array of conversation objects
    * @returns {string} Formatted text ready for clipboard
    */
-  function formatConversationsForClipboard(conversations) {
+  function formatConversationsForClipboard(conversations, promptType = null) {
     if (!conversations || !Array.isArray(conversations) || conversations.length === 0) {
       return '';
     }
-    
-    // Add server and channel info at the beginning if available
+  
     let result = '';
+    if (promptType === 'prompt') {
+      result += 'You are an assistant helping server admins, support moderators, ' +
+      'community managers, and HR personnel quickly summarize ticket conversations ' +
+      'for documentation, reporting, or follow-up.\n\n' +
+      'Below is a formatted transcript of a ticket interaction. Your task is to generate ' +
+      'a concise and professional summary of the interaction, including the purpose of the ticket, ' +
+      'any relevant actions or replies, and whether any follow-up is required:\n\n';
+    }
+  
     const firstConv = conversations[0];
-    
-    if (firstConv.serverName) {
-      result += `Server: ${firstConv.serverName}\n`;
-    }
-    
-    if (firstConv.channelName) {
-      result += `Channel: ${firstConv.channelName}\n\n`;
-    }
-    
-    return result + conversations.map(conv => 
+    if (firstConv.serverName) result += `Server: ${firstConv.serverName}\n`;
+    if (firstConv.channelName) result += `Channel: ${firstConv.channelName}\n\n`;
+  
+    result += conversations.map(conv => 
       `${conv.username}: ${conv.content} sent at "${conv.timestamp}"`
     ).join('\n');
+  
+    return result;
   }
+  
   
   /**
    * Copies text to the system clipboard

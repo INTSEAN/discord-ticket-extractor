@@ -1,5 +1,7 @@
 # Chrome Extension with React + Vite
 
+> **Landing Page:** [Visit here](https://junieguo.github.io/discord-ticket-extractor-landing-page/)
+
 A Chrome Extension built with React and Vite, using Manifest V3.
 
 ## Features
