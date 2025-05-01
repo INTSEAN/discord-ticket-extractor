@@ -1129,7 +1129,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Side panel received message:', message);
     if (message.action === 'historyCleared') {
       lastRefreshTime = 0;            // force UI-refresh
-      loadConversations();
+      // show the empty‐history page
+      loadHistory();
       showToast('History cleared');   // optional helper if you have a toast util
     } else if (message.action === 'conversationsUpdated') {
       // Only refresh if it's been at least 2 seconds since the last refresh
