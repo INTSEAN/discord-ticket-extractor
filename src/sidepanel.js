@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <label class="toggle-switch">
               <input type="checkbox" id="auto-refresh-toggle" ${autoRefreshIntervalId ? 'checked' : ''}>
               <span class="toggle-slider"></span>
-              <span class="toggle-label">Auto-refresh (5m)</span>
+              <span class="toggle-label">Auto-refresh (5secs)</span>
             </label>
           </div>
         </div>
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <label class="toggle-switch">
           <input type="checkbox" id="auto-refresh-toggle" ${autoRefreshIntervalId ? 'checked' : ''}>
           <span class="toggle-slider"></span>
-          <span class="toggle-label">Auto-refresh (5m)</span>
+          <span class="toggle-label">Auto-refresh (5 secs)</span>
         </label>
       </div>
       <div class="copy-feedback" id="copy-feedback">Copied to clipboard!</div>
@@ -1020,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', function() {
       clearInterval(autoRefreshIntervalId);
     }
     
-    const refreshInterval = 300000; // 5 minutes instead of 5 seconds
+    const refreshInterval = 5000; // 5 seconds
     console.log(`Enabling auto-refresh every ${refreshInterval/1000} seconds`);
     autoRefreshIntervalId = setInterval(loadConversations, refreshInterval);
   }
