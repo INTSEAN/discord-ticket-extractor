@@ -40,7 +40,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["src/assets/discord.svg"],
+      "resources": ["src/assets/discord.svg", "history.html"],
       "matches": ["https://tickettool.xyz/*", "https://api.tickettool.xyz/*"]
     }
   ],

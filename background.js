@@ -96,11 +96,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Update history
     chrome.storage.local.get(['history'], (result) => {
       const previousHistory = result.history || [];
+      const extractionTime = new Date().toISOString();
+      
       const newHistory = [...previousHistory, ...conversationsData.map(c => ({
         username: c.username,
         content: c.content,
         timestamp: c.timestamp,
-        server_name: c.serverName || '' // Ensure it's renamed to match your spec
+        server_name: c.serverName || '', // Ensure it's renamed to match your spec
+        extraction_time: extractionTime  // Add extraction time to group conversations
       }))];
   
       chrome.storage.local.set({ history: newHistory }, () => {
@@ -125,6 +128,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
   }
   
+  // Clear both history and current conversations
+  if (message.action === 'clearAll') {
+    chrome.storage.local.set({ 
+      history: [],
+      conversations: []
+    }, () => {
+      console.log('All data cleared (history and current conversations).');
+      
+      // Notify all components about the clear operation
+      chrome.runtime.sendMessage({ action: 'allDataCleared' });
+    });
+    sendResponse({ success: true });
+  }
+  
+  // Handle the external history clear message (from history page to sidebar)
+  if (message.action === 'historyClearedExternal') {
+    // Forward this message to all extension components
+    chrome.runtime.sendMessage({ action: 'historyClearedExternal' });
+    sendResponse({ success: true });
+  }
   
   if (message.action === 'getStoredConversations') {
     // Get from storage and send

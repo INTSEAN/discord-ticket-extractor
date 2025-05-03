@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
 import { writeFileSync, copyFileSync, mkdirSync, existsSync } from 'fs'
+import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,11 +11,13 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        sidepanel: resolve(__dirname, 'sidepanel.html')
+        sidepanel: resolve(__dirname, 'sidepanel.html'),
+        history: resolve(__dirname, 'history.html')
       }
     }
   },
   plugins: [
+    react(),
     {
       name: 'generate-chrome-extension-files',
       closeBundle() {
@@ -30,7 +33,6 @@ export default defineConfig({
         // Copy the content script and helpers (helpers first)
         copyFileSync(resolve(__dirname, 'src/helpers.js'), resolve(__dirname, 'dist/src/helpers.js'));
         copyFileSync(resolve(__dirname, 'src/contentScript.js'), resolve(__dirname, 'dist/src/contentScript.js'));
-        copyFileSync(resolve(__dirname, 'src/sidepanel.js'), resolve(__dirname, 'dist/src/sidepanel.js'));
         
         // Copy background.js from root directory instead of generating it
         copyFileSync(resolve(__dirname, 'background.js'), resolve(__dirname, 'dist/background.js'));
@@ -42,7 +44,7 @@ export default defineConfig({
         }
         
         // Copy icon files if they exist
-        const iconFiles = ['discord_16.png', 'discord_48.png', 'discord_128.png', 'discord_icon.png'];
+        const iconFiles = ['discord_16.png', 'discord_48.png', 'discord_128.png', 'discord_icon.png', 'discord.svg'];
         iconFiles.forEach(icon => {
           const iconPath = resolve(__dirname, `src/assets/${icon}`);
           if (existsSync(iconPath)) {
