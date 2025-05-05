@@ -79,44 +79,6 @@ This document contains procedures to test the functionality and quality of our d
 
 **If using this document, conduct all the tests in order. If you encounter an error, redownload the extension and isolate the test to see what exactly is going wrong.**
 
-## Interface
-
-Download the extension.
-
-### Test 1:
-
-1. Navigate to a new Chrome Tab.
-2. Click on the extension icon in the toolbar:
-
-![S1.1](testing_screenshots/chrome_extensions_toolbar.png)
-
-3. Ensure this display comes up:
-
-![S1.2](testing_screenshots/toolbar.png)
-
-4. Click on "Discord Conversation Extractor"
-
-5. Make sure the sidebar pops up with no data populated.
-
-6. Click on history.
-
-7. Make sure the extension contains no history.
-
-### Test 2:
-
-1. Open a discord ticket without the extension sidebar opened.
-2. Check that this screen appears:
-
-![S2.1](testing_screenshots/extracting_conversations.png)
-
-3. Open the extension sidebar.
-
-4. Check that the tickets are populated in the sidebar.
-
-5. Click on history.
-
-6. Check that the tickets were added to history.
-
 ### Test Case 7: Sidebar Resizing
 
 **Steps:**
@@ -146,10 +108,10 @@ Download the extension.
 **Steps:**
 1. Open multiple Discord tickets in separate tabs.
 2. Extract each ticket using the extension.
-3. Open the "History" tab in the sidebar.
+3. Open "History".
 
 **Expected Results:**
-- All extracted tickets should appear in the history tab.
+- All extracted tickets should appear in the history.
 - Each ticket should be displayed with its corresponding metadata (e.g., timestamp, ticket ID).
 
 ---
