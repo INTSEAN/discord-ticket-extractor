@@ -23,6 +23,7 @@ export default function ConversationList({
   onViewHistory
 }) {
   const [showCopyFeedback, setShowCopyFeedback] = useState(false);
+  const [showPromptDropdown, setShowPromptDropdown] = useState(false);
 
   const serverName = conversations[0]?.serverName || 'Discord Conversation';
   const channelName = conversations[0]?.channelName || '';
@@ -34,8 +35,8 @@ export default function ConversationList({
   };
   
   // Function to copy conversations with prompt format to clipboard
-  const copyWithPromptToClipboard = () => {
-    const formattedText = formatConversationsForClipboard(conversations, 'prompt');
+  const copyWithPromptToClipboard = (promptType = 'summarize') => {
+    const formattedText = formatConversationsForClipboard(conversations, promptType);
     handleCopy(formattedText);
   };
   
@@ -51,15 +52,18 @@ export default function ConversationList({
     if (!conversations || !Array.isArray(conversations) || conversations.length === 0) {
       return '';
     }
-  
+
     let result = '';
-    if (promptType === 'prompt') {
+    if (promptType === 'summarize') {
       result += 'You are an assistant helping server admins, support moderators, ' +
       'community managers, and HR personnel quickly summarize ticket conversations ' +
       'for documentation, reporting, or follow-up.\n\n' +
       'Below is a formatted transcript of a ticket interaction. Your task is to generate ' +
       'a concise and professional summary of the interaction, including the purpose of the ticket, ' +
       'any relevant actions or replies, and whether any follow-up is required:\n\n';
+    } else if (promptType === 'follow-up') {
+      result += 'You are an assistant identifying any follow-up tasks from this ticket. ' +
+      'List action items, responsibilities, and whether additional support is needed.\n\n';
     }
   
     const firstConv = conversations[0];
@@ -105,17 +109,56 @@ export default function ConversationList({
               <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
             </svg>
           </Button>
-          <Button 
-            variant="icon" 
-            wide={true}
-            onClick={copyWithPromptToClipboard}
-            title="Copy with Prompt"
-          >
-            <span>Copy + Prompt</span>
-            <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-            </svg>
-          </Button>
+
+          {/* Dropdown button for copy with prompt options */}
+          <div style={{ position: 'relative' }}>
+            <Button 
+              variant="icon" 
+              wide={true}
+              onClick={() => setShowPromptDropdown(prev => !prev)}
+              title="Copy with Prompt"
+            >
+              <span>Copy + Prompt ▾</span>
+              <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+              </svg>
+            </Button>
+
+            {showPromptDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                backgroundColor: '#fff',
+                border: '1px solid #ccc',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                zIndex: 10,
+                minWidth: '180px'
+              }}>
+                <div 
+                  className="dropdown-item"
+                  style={{ padding: '8px 12px', cursor: 'pointer' }}
+                  onClick={() => {
+                    copyWithPromptToClipboard('summarize');
+                    setShowPromptDropdown(false);
+                  }}
+                >
+                  Summarize
+                </div>
+                <div 
+                  className="dropdown-item"
+                  style={{ padding: '8px 12px', cursor: 'pointer' }}
+                  onClick={() => {
+                    copyWithPromptToClipboard('follow-up');
+                    setShowPromptDropdown(false);
+                  }}
+                >
+                  Follow-Up
+                </div>
+              </div>
+            )}
+          </div>
+
           <Button 
             variant="icon" 
             onClick={onRefresh}
@@ -179,4 +222,4 @@ export default function ConversationList({
       </div>
     </div>
   );
-} 
+}
