@@ -62,8 +62,20 @@ export default function ConversationList({
       'a concise and professional summary of the interaction, including the purpose of the ticket, ' +
       'any relevant actions or replies, and whether any follow-up is required:\n\n';
     } else if (promptType === 'follow-up') {
-      result += 'You are an assistant identifying any follow-up tasks from this ticket. ' +
-      'List action items, responsibilities, and whether additional support is needed.\n\n';
+      result += 'You are an assistant identifying follow-up tasks and accountability in a support ticket. ' +
+      'Read the transcript and generate a checklist of action items. Include what needs to be done, who should do it ' +
+      '(e.g., moderators, developers, HR), and note any unresolved issues that require clarification or escalation:\n\n';
+    } else if (promptType === 'urgency-check') {
+      result += 'You are an assistant assessing support tickets. Based on the transcript, provide:\n' +
+      '- A brief summary of the issue\n' +
+      '- Sentiment (Positive, Neutral, Negative)\n' +
+      '- Urgency (Low, Medium, High)\n' +
+      '- Any red flags for escalation\n\n';
+    } else if (promptType === 'categorize') {
+      result += 'You are organizing a support ticket. From the conversation, identify:\n' +
+      '1. The core issue\n' +
+      '2. A category (e.g., Feature Request, Bug Report, Complaint)\n' +
+      '3. Tags/labels for tracking\n\n';
     }
   
     const firstConv = conversations[0];
@@ -122,7 +134,6 @@ export default function ConversationList({
                 <span>Copy + Prompt</span>
                 <span style={{ marginLeft: '8px' }}>▾</span>
               </span>
-              {/* ...icon */}
             </Button>
 
             {showPromptDropdown && (
@@ -132,6 +143,12 @@ export default function ConversationList({
                 </div>
                 <div className="prompt-dropdown-item" onClick={() => { copyWithPromptToClipboard('follow-up'); setShowPromptDropdown(false); }}>
                   Follow-Up
+                </div>
+                <div className="prompt-dropdown-item" onClick={() => { copyWithPromptToClipboard('urgency-check'); setShowPromptDropdown(false); }}>
+                  Urgency Check
+                </div>
+                <div className="prompt-dropdown-item" onClick={() => { copyWithPromptToClipboard('categorize'); setShowPromptDropdown(false); }}>
+                  Categorize
                 </div>
               </div>
             )}
