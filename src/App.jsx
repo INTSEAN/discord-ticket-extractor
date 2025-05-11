@@ -1,39 +1,29 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import { useEffect } from 'react'
+import SidePanel from './components/SidePanel'
+import './styles/ui.css'
 
 function App() {
-  const [url, setUrl] = useState('')
-  
+  // Add font links to the document head
   useEffect(() => {
-    // Get the current tab URL (Chrome Extension API)
-    if (chrome?.tabs) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        setUrl(tabs[0].url)
-      })
+    const fontLink = document.createElement('link')
+    fontLink.rel = 'stylesheet'
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap'
+    document.head.appendChild(fontLink)
+    
+    return () => {
+      // Clean up on unmount
+      document.head.removeChild(fontLink)
     }
   }, [])
 
   return (
     <div className="app">
       <header>
-        <h1>Chrome Extension</h1>
+        Discord Conversations
       </header>
-      <main>
-        <div className="card">
-          <h2>Current Tab</h2>
-          <p>{url || "URL not available"}</p>
-        </div>
-        <button onClick={() => {
-          if (chrome?.tabs) {
-            chrome.tabs.create({ url: "https://github.com" })
-          }
-        }}>
-          Open GitHub
-        </button>
-      </main>
-      <footer>
-        <p>Made with React & Vite</p>
-      </footer>
+      <div className="content">
+        <SidePanel />
+      </div>
     </div>
   )
 }
