@@ -23,6 +23,7 @@ export default function ConversationList({
   onViewHistory
 }) {
   const [showCopyFeedback, setShowCopyFeedback] = useState(false);
+  const [showPromptDropdown, setShowPromptDropdown] = useState(false);
 
   const serverName = conversations[0]?.serverName || 'Discord Conversation';
   const channelName = conversations[0]?.channelName || '';
@@ -34,8 +35,8 @@ export default function ConversationList({
   };
   
   // Function to copy conversations with prompt format to clipboard
-  const copyWithPromptToClipboard = () => {
-    const formattedText = formatConversationsForClipboard(conversations, 'prompt');
+  const copyWithPromptToClipboard = (promptType = 'summarize') => {
+    const formattedText = formatConversationsForClipboard(conversations, promptType);
     handleCopy(formattedText);
   };
   
@@ -51,15 +52,30 @@ export default function ConversationList({
     if (!conversations || !Array.isArray(conversations) || conversations.length === 0) {
       return '';
     }
-  
+
     let result = '';
-    if (promptType === 'prompt') {
+    if (promptType === 'summarize') {
       result += 'You are an assistant helping server admins, support moderators, ' +
       'community managers, and HR personnel quickly summarize ticket conversations ' +
       'for documentation, reporting, or follow-up.\n\n' +
       'Below is a formatted transcript of a ticket interaction. Your task is to generate ' +
       'a concise and professional summary of the interaction, including the purpose of the ticket, ' +
       'any relevant actions or replies, and whether any follow-up is required:\n\n';
+    } else if (promptType === 'follow-up') {
+      result += 'You are an assistant identifying follow-up tasks and accountability in a support ticket. ' +
+      'Read the transcript and generate a checklist of action items. Include what needs to be done, who should do it ' +
+      '(e.g., moderators, developers, HR), and note any unresolved issues that require clarification or escalation:\n\n';
+    } else if (promptType === 'urgency-check') {
+      result += 'You are an assistant assessing support tickets. Based on the transcript, provide:\n' +
+      '- A brief summary of the issue\n' +
+      '- Sentiment (Positive, Neutral, Negative)\n' +
+      '- Urgency (Low, Medium, High)\n' +
+      '- Any red flags for escalation\n\n';
+    } else if (promptType === 'categorize') {
+      result += 'You are organizing a support ticket. From the conversation, identify:\n' +
+      '1. The core issue\n' +
+      '2. A category (e.g., Feature Request, Bug Report, Complaint)\n' +
+      '3. Tags/labels for tracking\n\n';
     }
   
     const firstConv = conversations[0];
@@ -105,17 +121,39 @@ export default function ConversationList({
               <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
             </svg>
           </Button>
-          <Button 
-            variant="icon" 
-            wide={true}
-            onClick={copyWithPromptToClipboard}
-            title="Copy with Prompt"
-          >
-            <span>Copy + Prompt</span>
-            <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-            </svg>
-          </Button>
+
+          {/* Dropdown button for copy with prompt options */}
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <Button
+              variant="icon"
+              wide={true}
+              onClick={() => setShowPromptDropdown(prev => !prev)}
+              title="Copy with Prompt"
+            >
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <span>Copy + Prompt</span>
+                <span style={{ marginLeft: '8px' }}>▾</span>
+              </span>
+            </Button>
+
+            {showPromptDropdown && (
+              <div className="prompt-dropdown">
+                <div className="prompt-dropdown-item" onClick={() => { copyWithPromptToClipboard('summarize'); setShowPromptDropdown(false); }}>
+                  Summarize
+                </div>
+                <div className="prompt-dropdown-item" onClick={() => { copyWithPromptToClipboard('follow-up'); setShowPromptDropdown(false); }}>
+                  Follow-Up
+                </div>
+                <div className="prompt-dropdown-item" onClick={() => { copyWithPromptToClipboard('urgency-check'); setShowPromptDropdown(false); }}>
+                  Urgency Check
+                </div>
+                <div className="prompt-dropdown-item" onClick={() => { copyWithPromptToClipboard('categorize'); setShowPromptDropdown(false); }}>
+                  Categorize
+                </div>
+              </div>
+            )}
+          </div>
+
           <Button 
             variant="icon" 
             onClick={onRefresh}
@@ -179,4 +217,4 @@ export default function ConversationList({
       </div>
     </div>
   );
-} 
+}
