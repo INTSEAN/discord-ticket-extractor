@@ -716,9 +716,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   10% { opacity: 1; }
   90% { opacity: 1; }
   100% { opacity: 0; }
-<<<<<<< HEAD
-} 
-=======
 }
 
 /* Dropdown button */
@@ -747,4 +744,3 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .prompt-dropdown-item:hover {
   background-color: rgba(197, 164, 126, 0.1);
 }
->>>>>>> upstream/main

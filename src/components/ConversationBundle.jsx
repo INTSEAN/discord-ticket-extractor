@@ -136,18 +136,6 @@ export default function ConversationBundle({
         </motion.div>
       </motion.div>
       
-      {/* per‑ticket delete */}
-      {onClear && (
-          <Button
-            variant="icon"
-            title="Delete this ticket"
-            onClick={(e) => { e.stopPropagation(); onClear(); }}
-            style={{ marginRight: 8 }}
-          >
-            🗑
-          </Button>
-        )}
-
       {/* Preview Content (shown when not expanded) */}
       {!isExpanded && (
         <div className="bundle-preview" style={{ padding: '0 16px 16px' }}>
