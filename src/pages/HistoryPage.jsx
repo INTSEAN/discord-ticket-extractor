@@ -5,444 +5,263 @@ import ConversationBundle from '../components/ConversationBundle';
 import '../styles/ui.css';
 
 /**
- * HistoryPage component for showing the conversation history
- * Includes search, filtering, statistics, and bundled conversations
- * 
- * @returns {JSX.Element}
+ * HistoryPage – shows saved Discord conversations
+ * – Dashboard metrics
+ * – Search / time filters
+ * – Bundled or individual view
+ * – Per‑ticket delete (🗑 Clear ticket) powered by background.js → clearTicket
  */
 export default function HistoryPage() {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [timeFilter, setTimeFilter] = useState('all'); // 'all', 'today', 'week', 'month', 'custom'
-  const [viewMode, setViewMode] = useState('bundled'); // 'bundled', 'individual'
+  /* ---------------- state ---------------- */
+  const [history, setHistory]             = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [searchTerm, setSearchTerm]       = useState('');
+  const [timeFilter, setTimeFilter]       = useState('all');   // all | today | week | month | custom
   const [showDateRange, setShowDateRange] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [copySuccess, setCopySuccess] = useState('');
-  const copyTimeoutRef = useRef(null);
-  const [metrics, setMetrics] = useState({
+  const [startDate, setStartDate]         = useState('');
+  const [endDate, setEndDate]             = useState('');
+  const [viewMode, setViewMode]           = useState('bundled'); // bundled | individual
+  const [copySuccess, setCopySuccess]     = useState('');
+  const copyTimeoutRef                    = useRef(null);
+  const [metrics, setMetrics]             = useState({
     totalConversations: 0,
     totalUsers: 0,
     activeServer: '',
     mostActiveTime: ''
   });
 
-  useEffect(() => {
-    // Load history on component mount
-    loadHistory();
-  }, []);
+  /* -------------- lifecycle -------------- */
+  useEffect(loadHistory, []);
 
-  useEffect(() => {
-    // Clear copy success message after 3 seconds
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current);
-      }
-    };
-  }, []);
+  // clean up copy‑to‑clipboard timeout
+  useEffect(() => () => clearTimeout(copyTimeoutRef.current), []);
 
-  // Load history from Chrome storage
-  const loadHistory = async () => {
+  /* -------- helpers / storage I/O -------- */
+  const ticketKeyOf = (row) => row.extraction_time || row.timestamp;
+
+  function loadHistory() {
     setLoading(true);
-    try {
-      chrome.storage.local.get(['history'], (result) => {
-        const historyData = result.history || [];
-        setHistory(historyData);
-        setLoading(false);
-        
-        // Calculate metrics
-        if (historyData.length > 0) {
-          calculateMetrics(historyData);
-        }
-      });
-    } catch (error) {
-      console.error('Error loading history:', error);
+    chrome.storage.local.get(['history'], ({ history: hist = [] }) => {
+      setHistory(hist);
       setLoading(false);
-    }
-  };
-
-  // Calculate metrics for dashboard
-  const calculateMetrics = (historyData) => {
-    // Get unique users
-    const uniqueUsers = new Set(historyData.map(item => item.username));
-    
-    // Get most active server
-    const serverCounts = {};
-    historyData.forEach(item => {
-      const server = item.server_name || 'Unknown';
-      serverCounts[server] = (serverCounts[server] || 0) + 1;
+      if (hist.length) calculateMetrics(hist);
     });
-    const activeServer = Object.keys(serverCounts).reduce((a, b) => 
-      serverCounts[a] > serverCounts[b] ? a : b, '');
-    
-    // Most active time (simple approach)
-    const hourCounts = {};
-    historyData.forEach(item => {
-      try {
-        const time = new Date(item.timestamp);
-        const hour = time.getHours();
-        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-      } catch (e) {
-        // Skip invalid timestamps
+  }
+
+  function calculateMetrics(hist) {
+    const users   = new Set(hist.map(r => r.username));
+    const servers = hist.reduce((acc, r) => {
+      const s = r.server_name || 'Unknown';
+      acc[s]  = (acc[s] || 0) + 1;
+      return acc;
+    }, {});
+    const activeServer = Object.keys(servers)
+      .reduce((a, b) => servers[a] > servers[b] ? a : b, '');
+
+    const hours = hist.reduce((acc, r) => {
+      const h = new Date(r.timestamp).getHours();
+      acc[h]  = (acc[h] || 0) + 1;
+      return acc;
+    }, {});
+    const peakHour = Object.keys(hours)
+      .reduce((a, b) => hours[a] > hours[b] ? a : b, '0');
+
+    setMetrics({
+      totalConversations: hist.length,
+      totalUsers: users.size,
+      activeServer,
+      mostActiveTime: `${peakHour}:00 – ${+peakHour + 1}:00`
+    });
+  }
+
+  /* --------- per‑ticket deleter ---------- */
+  function clearTicket(key) {
+    if (!window.confirm('Delete this ticket only?')) return;
+    chrome.runtime.sendMessage({ action: 'clearTicket', ticketKey: key }, (resp) => {
+      if (resp?.ok) {
+        // optimistic UI update
+        setHistory(prev => prev.filter(r => ticketKeyOf(r) !== key));
+        calculateMetrics(history.filter(r => ticketKeyOf(r) !== key));
       }
     });
-    const mostActiveHour = Object.keys(hourCounts).reduce((a, b) => 
-      hourCounts[a] > hourCounts[b] ? a : b, '0');
-    
-    const mostActiveTime = `${mostActiveHour}:00 - ${parseInt(mostActiveHour) + 1}:00`;
-    
-    setMetrics({
-      totalConversations: historyData.length,
-      totalUsers: uniqueUsers.size,
-      activeServer,
-      mostActiveTime
-    });
-  };
+  }
 
-  // Clear all history and current conversations
-  const clearHistory = () => {
-    if (window.confirm('Are you sure you want to delete all saved conversations? This will clear both history and current conversations.')) {
-      // Send message to background script to clear all data
-      chrome.runtime.sendMessage({ action: 'clearAll' });
-      
-      // Update local state
-      setHistory([]);
-      setMetrics({
-        totalConversations: 0,
-        totalUsers: 0,
-        activeServer: '',
-        mostActiveTime: ''
-      });
+  /* -------------- filtering -------------- */
+  function matchesTimeFilter(date) {
+    if (timeFilter === 'all') return true;
+    const d   = new Date(date);
+    const now = new Date();
+
+    switch (timeFilter) {
+      case 'today': return d.toDateString() === now.toDateString();
+      case 'week':  return d >= new Date(now.setDate(now.getDate() - 7));
+      case 'month': return d >= new Date(now.setMonth(now.getMonth() - 1));
+      case 'custom':
+        if (!startDate && !endDate) return true;
+        const start = startDate ? new Date(startDate).setHours(0,0,0,0) : -Infinity;
+        const end   = endDate   ? new Date(endDate).setHours(23,59,59,999) : Infinity;
+        return d >= start && d <= end;
+      default: return true;
     }
+  }
+
+  const filteredHistory = useMemo(
+    () =>
+      history.filter(r =>
+        (!searchTerm ||
+          r.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          r.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          r.server_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+        && matchesTimeFilter(r.timestamp)
+      ),
+    [history, searchTerm, timeFilter, startDate, endDate]
+  );
+
+  /* ---------- build bundles array -------- */
+  const groupedConversations = useMemo(() => {
+    const groups = {};
+    filteredHistory.forEach((row) => {
+      const key     = ticketKeyOf(row);
+      const server  = row.server_name || 'Unknown Server';
+      if (!groups[key]) groups[key] = { server_name: server, extractedAt: key, conversations: [] };
+      groups[key].conversations.push(row);
+    });
+    return Object.values(groups).sort((a, b) => new Date(b.extractedAt) - new Date(a.extractedAt));
+  }, [filteredHistory]);
+
+  /* --------------- actions --------------- */
+  const toggleViewMode   = () => setViewMode(v => v === 'bundled' ? 'individual' : 'bundled');
+  const toggleDateRange  = () => {
+    setShowDateRange(!showDateRange);
+    if (!showDateRange) setTimeFilter('custom'); else setTimeFilter('all');
   };
 
-  // Copy filtered conversations to clipboard
-  const copyFilteredConversations = () => {
-    const filteredData = getFilteredHistory();
-    if (filteredData.length === 0) {
+  function clearAll() {
+    if (!window.confirm('This will delete ALL saved data. Continue?')) return;
+    chrome.runtime.sendMessage({ action: 'clearAll' });
+    setHistory([]);
+    setMetrics({ totalConversations: 0, totalUsers: 0, activeServer: '', mostActiveTime: '' });
+  }
+
+  function copyFilteredConversations() {
+    const out =
+      viewMode === 'bundled'
+        ? groupedConversations.map(g =>
+            `--- ${g.server_name} (${new Date(g.extractedAt).toLocaleString()}) ---\n\n` +
+            g.conversations.map(c =>
+              `${c.username} (${new Date(c.timestamp).toLocaleString()}):\n${c.content}\n\n`
+            ).join('') + '-'.repeat(50) + '\n\n'
+          ).join('')
+        : filteredHistory.map(c =>
+            `${c.username} (${new Date(c.timestamp).toLocaleString()}):\n${c.content}\n\n`
+          ).join('');
+
+    if (!out) {
       setCopySuccess('No conversations to copy');
       return;
     }
 
-    // Format conversations for clipboard
-    let formattedText = '';
-    
-    if (viewMode === 'bundled') {
-      // Format by groups
-      groupedConversations.forEach((group, index) => {
-        formattedText += `--- Conversations from ${group.server_name} (${new Date(group.extractedAt).toLocaleString()}) ---\n\n`;
-        
-        group.conversations.forEach((conv, i) => {
-          formattedText += `${conv.username} (${new Date(conv.timestamp).toLocaleString()}):\n`;
-          formattedText += `${conv.content}\n\n`;
-        });
-        
-        formattedText += '-'.repeat(50) + '\n\n';
-      });
-    } else {
-      // Format individual conversations
-      filteredData.forEach((conv, index) => {
-        formattedText += `${conv.username} (${new Date(conv.timestamp).toLocaleString()}):\n`;
-        formattedText += `${conv.content}\n\n`;
-      });
-    }
-    
-    // Copy to clipboard
-    navigator.clipboard.writeText(formattedText)
+    navigator.clipboard.writeText(out)
       .then(() => {
         setCopySuccess('Copied!');
-        
-        // Clear message after 3 seconds
-        if (copyTimeoutRef.current) {
-          clearTimeout(copyTimeoutRef.current);
-        }
-        copyTimeoutRef.current = setTimeout(() => {
-          setCopySuccess('');
-        }, 3000);
+        clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = setTimeout(() => setCopySuccess(''), 3000);
       })
-      .catch(err => {
-        console.error('Failed to copy: ', err);
-        setCopySuccess('Copy failed');
-      });
-  };
+      .catch(() => setCopySuccess('Copy failed'));
+  }
 
-  // Toggle date range filter visibility
-  const toggleDateRange = () => {
-    setShowDateRange(!showDateRange);
-    if (!showDateRange) {
-      setTimeFilter('custom');
-    } else {
-      setTimeFilter('all');
-      setStartDate('');
-      setEndDate('');
-    }
-  };
-
-  // Filter history by search term and time filter
-  const getFilteredHistory = () => {
-    return history.filter(item => {
-      // Search term filter
-      const matchesSearch = 
-        !searchTerm || 
-        item.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.server_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // Time filter
-      let matchesTime = true;
-      
-      if (timeFilter === 'custom' && (startDate || endDate)) {
-        const itemDate = new Date(item.timestamp);
-        
-        if (startDate) {
-          const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
-          if (itemDate < start) {
-            matchesTime = false;
-          }
-        }
-        
-        if (endDate && matchesTime) {
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          if (itemDate > end) {
-            matchesTime = false;
-          }
-        }
-      } else if (timeFilter !== 'all') {
-        const itemDate = new Date(item.timestamp);
-        const now = new Date();
-        
-        switch(timeFilter) {
-          case 'today':
-            matchesTime = itemDate.toDateString() === now.toDateString();
-            break;
-          case 'week':
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(now.getDate() - 7);
-            matchesTime = itemDate >= oneWeekAgo;
-            break;
-          case 'month':
-            const oneMonthAgo = new Date();
-            oneMonthAgo.setMonth(now.getMonth() - 1);
-            matchesTime = itemDate >= oneMonthAgo;
-            break;
-          default:
-            matchesTime = true;
-        }
-      }
-      
-      return matchesSearch && matchesTime;
-    });
-  };
-
-  // Group conversations by extraction time or server
-  const groupedConversations = useMemo(() => {
-    const filteredHistory = getFilteredHistory();
-    
-    // Generate groups based on extraction time
-    const groups = {};
-    
-    filteredHistory.forEach(item => {
-      // Use extraction_time as the primary grouping key, fallback to timestamp
-      const extractionTime = item.extraction_time || item.timestamp || new Date().toISOString();
-      const server = item.server_name || 'Unknown Server';
-      
-      // Create a groupKey based on extraction time
-      const groupKey = extractionTime;
-      
-      if (!groups[groupKey]) {
-        groups[groupKey] = {
-          server_name: server,
-          extractedAt: extractionTime,
-          conversations: []
-        };
-      }
-      
-      groups[groupKey].conversations.push(item);
-    });
-    
-    // Convert to array and sort by extraction time (newest first)
-    return Object.values(groups).sort((a, b) => 
-      new Date(b.extractedAt) - new Date(a.extractedAt)
-    );
-  }, [history, searchTerm, timeFilter, startDate, endDate]);
-
-  // Toggle view mode between bundled and individual
-  const toggleViewMode = () => {
-    setViewMode(viewMode === 'bundled' ? 'individual' : 'bundled');
-  };
-
-  
-  const filteredHistory = getFilteredHistory();
-
+  /* ---------------- render ---------------- */
   return (
     <div className="history-page">
-      <div className="history-header">
-        <h2 className="history-title luxury-heading">Conversation History</h2>
-      </div>
-      
-      {/* Dashboard metrics */}
+      <h2 className="history-title luxury-heading">Conversation History</h2>
+
+      {/* metrics */}
       <div className="dashboard-metrics">
-        <div className="metric-card">
-          <div className="metric-title">Total Conversations</div>
-          <div className="metric-value">{metrics.totalConversations}</div>
-        </div>
-        <div className="metric-card">
-          <div className="metric-title">Total Users</div>
-          <div className="metric-value">{metrics.totalUsers}</div>
-        </div>
-        <div className="metric-card">
-          <div className="metric-title">Most Active Server</div>
-          <div className="metric-value">{metrics.activeServer || 'N/A'}</div>
-        </div>
-        <div className="metric-card">
-          <div className="metric-title">Peak Activity Time</div>
-          <div className="metric-value">{metrics.mostActiveTime || 'N/A'} h</div>
-        </div>
+        <div className="metric-card"><div>Total Messages</div><div>{metrics.totalConversations}</div></div>
+        <div className="metric-card"><div>Total Users</div><div>{metrics.totalUsers}</div></div>
+        <div className="metric-card"><div>Most Active Server</div><div>{metrics.activeServer || 'N/A'}</div></div>
+        <div className="metric-card"><div>Peak Activity Time</div><div>{metrics.mostActiveTime || 'N/A'}</div></div>
       </div>
-      
-      {/* Controls */}
+
+      {/* controls */}
       <div className="dashboard-controls">
         <input
-          type="text"
           className="search-bar"
-          placeholder="Search conversations..."
+          placeholder="Search conversations…"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
         />
-        
+
+        {/* time filters */}
         {!showDateRange && (
           <>
-            <Button 
-              variant="secondary" 
-              onClick={() => setTimeFilter('all')}
-              className={timeFilter === 'all' ? 'active' : ''}
-            >
-              All Time
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={() => setTimeFilter('today')}
-              className={timeFilter === 'today' ? 'active' : ''}
-            >
-              Today
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={() => setTimeFilter('week')}
-              className={timeFilter === 'week' ? 'active' : ''}
-            >
-              This Week
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={() => setTimeFilter('month')}
-              className={timeFilter === 'month' ? 'active' : ''}
-            >
-              This Month
-            </Button>
+            {['all','today','week','month'].map(t => (
+              <Button key={t} variant="secondary"
+                className={timeFilter === t ? 'active' : ''}
+                onClick={() => setTimeFilter(t)}>
+                {t === 'all' ? 'All Time' :
+                 t === 'today' ? 'Today' :
+                 t === 'week' ? 'This Week' : 'This Month'}
+              </Button>
+            ))}
           </>
         )}
-        
-        <Button 
-          variant="secondary" 
-          onClick={toggleDateRange}
-          className={showDateRange ? 'active' : ''}
-        >
-          {showDateRange ? 'Simple Filters' : 'Date Range'}
+
+        <Button variant="secondary" onClick={toggleDateRange}>
+          {showDateRange ? 'Simple Filters' : 'Date Range'}
         </Button>
-        
+
         {showDateRange && (
           <div className="date-range-controls">
-            <div className="date-input-container">
-              <label htmlFor="start-date">From:</label>
-              <input 
-                type="date"
-                id="start-date"
-                className="date-input"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div className="date-input-container">
-              <label htmlFor="end-date">To:</label>
-              <input 
-                type="date"
-                id="end-date"
-                className="date-input"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
+            <label>From:
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            </label>
+            <label>To:
+              <input type="date" value={endDate}   onChange={e => setEndDate(e.target.value)} />
+            </label>
           </div>
         )}
-        
-        <Button 
-          variant="secondary" 
-          onClick={toggleViewMode}
-          className="view-mode-button"
-        >
-          {viewMode === 'bundled' ? 'Individual View' : 'Bundled View'}
+
+        <Button variant="secondary" onClick={toggleViewMode}>
+          {viewMode === 'bundled' ? 'Individual View' : 'Bundled View'}
         </Button>
-        
-        <div style={{ flexGrow: 1 }}></div>
-        
-        <div className="copy-container">
-          <Button 
-            variant="primary" 
-            onClick={copyFilteredConversations}
-            title="Copy filtered conversations"
-          >
-            Copy Results
-          </Button>
-          {copySuccess && <span className="copy-message">{copySuccess}</span>}
-        </div>
-        
-        <Button onClick={loadHistory} title="Refresh">
-          Refresh
-        </Button>
-        <Button variant="secondary" onClick={clearHistory}>
-          Clear All
-        </Button>
+
+        <div style={{ flexGrow: 1 }} />
+
+        <Button variant="primary" onClick={copyFilteredConversations}>Copy Results</Button>
+        {copySuccess && <span className="copy-message">{copySuccess}</span>}
+
+        <Button onClick={loadHistory} title="Refresh">⟳</Button>
+        <Button variant="secondary" onClick={clearAll}>Clear All</Button>
       </div>
-      
-      {/* History list */}
+
+      {/* list */}
       {loading ? (
-        <div className="loading-indicator">Loading history...</div>
-      ) : filteredHistory.length > 0 ? (
-        viewMode === 'bundled' ? (
-          // Bundled view
-          <div className="history-bundles">
-            {groupedConversations.map((group, groupIndex) => (
-              <ConversationBundle
-                key={groupIndex}
-                conversations={group.conversations}
-                serverName={group.server_name}
-                timestamp={group.extractedAt}
-              />
-            ))}
-          </div>
-        ) : (
-          // Individual view (original implementation)
-          <div className="history-grid">
-            {filteredHistory.map((item, index) => (
-              <ConversationItem
-                key={index}
-                username={item.username}
-                timestamp={item.timestamp}
-                content={item.content}
-              />
-            ))}
-          </div>
-        )
-      ) : (
+        <div className="loading-indicator">Loading…</div>
+      ) : !filteredHistory.length ? (
         <div className="empty-state">
           <h3 className="luxury-heading">No History Found</h3>
-          <p>{searchTerm ? 'No results match your search.' : 'Your conversation history is empty.'}</p>
+          <p>{searchTerm ? 'No results match your search.' : 'Your history is empty.'}</p>
+        </div>
+      ) : viewMode === 'bundled' ? (
+        <div className="history-bundles">
+          {groupedConversations.map(g => (
+            <ConversationBundle
+              key={g.extractedAt}
+              conversations={g.conversations}
+              serverName={g.server_name}
+              timestamp={g.extractedAt}
+              onClear={() => clearTicket(g.extractedAt)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="history-grid">
+          {filteredHistory.map((c, i) => (
+            <ConversationItem key={i} {...c} />
+          ))}
         </div>
       )}
     </div>
   );
-} 
+}

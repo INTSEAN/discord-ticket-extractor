@@ -157,7 +157,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true; // Keep the message channel open for async response
   }
-  
+
+  if (message.action === 'clearTicket' && message.ticketKey) {
+    chrome.storage.local.get({ history: [] }, ({ history }) => {
+      const updatedHistory = history.filter(
+        (row) => (row.extraction_time || row.timestamp) !== message.ticketKey
+      );
+
+      chrome.storage.local.set({ history: updatedHistory }, () => {
+        console.log(
+          `Ticket ${message.ticketKey} cleared — removed ${
+            history.length - updatedHistory.length
+          } row(s).`
+        );
+        chrome.runtime.sendMessage({
+          action: 'ticketCleared',
+          ticketKey: message.ticketKey,
+        });
+        sendResponse({
+          ok: true,
+          removed: history.length - updatedHistory.length,
+        });
+      });
+    });
+    return true; // keep the channel open for async sendResponse
+  }
+
   if (message.action === 'conversationsUpdated') {
     // Simply relay the message to all listeners (including sidepanel)
     chrome.runtime.sendMessage({
