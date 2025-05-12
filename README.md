@@ -1,38 +1,66 @@
 # Chrome Extension: Discord Ticket Extractor
 
-> **Landing Page:** [Visit here](https://junieguo.github.io/discord-ticket-extractor-landing-page/)
-> **Demo Video:** [Visit here](https://youtu.be/OLsjDF6k23Y)
+- **Landing Page:** [Visit here](https://junieguo.github.io/discord-ticket-extractor-landing-page/)
+- **Demo Video:** [Visit here](https://youtu.be/fqZS18wfngM)
+- **Pitching Video:** [Visit here](https://youtu.be/__rOadU_dxI?si=9WXmnAi7qXOM6_BL)
+
+## Meet the Team
+
+PM + Dev: Cecilia Zhang
+Computer Science @ Bryn Mawr College '25
+[LinkedIn](https://www.linkedin.com/in/cecilia-zhang-9b6aa7190/)
+
+Dev: Sean Donovan
+Engineering @ Penn '27
+[LinkedIn](https://www.linkedin.com/in/seandonovan-upenn/)
+
+Dev: Junie Guo
+Computer Science + Economics @ Penn '27
+[LinkedIn](https://www.linkedin.com/in/junieguo/)
+
+Dev: Garrett Kirsch
+Computer Engineering @ Penn '27
+[LinkedIn](https://www.linkedin.com/in/garrett-kirsch/)
 
 ## Description
 
-Our Chrome extension transforms lengthy Discord ticket conversations into clean, ready-to-use text for LLMs like ChatGPT. As soon as you open a Ticket Tool transcript in your browser, it automatically strips out system messages, emotes, and other noise and copies the refined conversation to your clipboard. With one-click preset prompts—such as summarization or action‐item extraction—you can instantly prepare your data for analysis or follow-up. Plus, a built-in history panel lets you quickly search and retrieve past transcripts by title, saving moderators and community managers valuable time. This Chrome Extension is built with React and Vite, using Manifest V3.
+Our Chrome extension streamlines Discord ticket conversations into clean, ready-to-use text for LLMs like ChatGPT. When a Ticket Tool transcript is opened in the browser, it automatically removes system messages, emotes, and other clutter, then copies the refined conversation to the clipboard. Users can apply one-click prompts such as summarization, action item extraction, and categorization to quickly prepare content for analysis or follow-up. A built-in history tab allows fast keyword-based search across past transcripts, helping moderators and community managers efficiently locate specific tickets among hundreds. The extension is built with React and Vite using Manifest V3.
 
 ## Setup Instruction
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable "Developer mode" by toggling the switch in the top right corner
-3. Click "Load unpacked" and select the `dist` directory from this project
-4. The extension should now be installed and visible in your Chrome toolbar
+1. Download the GitHub repository as a ZIP file and unzip it. Navigate to the `discord-ticket-extractor` directory.  
+2. Run `npm install` to install all dependencies.  
+3. Run `npm run build`. This will generate a `dist` directory.  
+4. Open Chrome and go to `chrome://extensions/`.  
+5. In the top right corner, enable **Developer mode**.  
+6. Click **Load unpacked** and select the `dist` folder from the project directory.  
+7. The extension should now be installed and appear in your Chrome toolbar.
+
+## Requirements
+
+1. A Discord account  
+2. A TicketTool transcript **link**. It should start with `https://tickettool.xyz/transcript/`.  
+3. If you do not have one, we provide sample transcript links (need to log in to Discord first):  
+   - [Transcript Test 1](https://tickettool.xyz/transcript/v1/1111393507123404860/1367315040302137344/transcript-test-1.html/6821fa9d/6820a91d/5c43312ce72cafd85cbf1f665fba03f8ecc2ca232a993b9c281f35a64cf2e579)  
+   - [Transcript Test 2](https://tickettool.xyz/transcript/v1/1111393507123404860/1367317147826655343/transcript-test-2.html/6822a553/682153d3/bfeb5fce21c90e7c80dc4cb00eaabbd28585d0dc4b90146ae4c51c2b8f673b44)
 
 ## Features
 
 - Auto detection + conversation extraction (Sean)
-- One-click copy to clipboard with preset prompt (Junie)
-- History page for past transcripts (Cecilia + Garret)
-- Search engine in history (WIP, Cecilia + Garret)
+- One-click copy to clipboard with preset prompts (Junie)
+- History page view (Cecilia)
+- Ticket history deletion (single & clear all) (Garret)
+- History Search Bar (Sean + Cecilia)
 
-## Known Bugs
+## Known Bugs / Limitations
 
-1. Clearing history in the history view does not clear the current conversations displayed in the main sidebar view. Even when you close out of Chrome, the data persists.
-2. Need to improve the History page UI. Currently, our extension combines all extracted messages and displays them in the same view.
-3. The current code base uses vanilla JavaScript for rendering views. We plan to work on refactoring our code into React during the exam period.
+1. TicketTool transcript links might expire. If the transcript link shows **"invalid request"**, user will need to re-generate transcript link, and then open in browser for extraction.
 
 ## Future Work
 
-1. Add more preset prompts.
-2. Enhance the UI for feedback message after copying to clipboard.
-3. Search bar in History view.
-4. Refactored codebase using React, if time allows.
+1. History view UI enhancement.
+2. Ticket history tags.
+3. Allow users to customize prompts.
 
 ## Development
 
@@ -53,8 +81,6 @@ npm run build
 
 After building, the `dist` directory will contain the extension ready for loading into Chrome.
 
-
-
 ## Challenges Faced
 
 ### Iframe Content Access
@@ -71,7 +97,7 @@ The DOM inspection revealed that the main page contained an iframe with the Disc
 
 Our content script was running in the main page context, but the conversation data was isolated in the iframe context.
 
-#### Solution:
+#### Solution
 
 We modified the content script to detect whether it was running in an iframe or the main page and handle each case appropriately:
 
@@ -183,6 +209,7 @@ async function processTicketPage() {
 ```
 
 This approach allowed the extension to:
+
 1. Detect when it's running in the main page and identify the iframe containing the conversation
 2. Provide helpful guidance to users when it can't access the iframe content directly
 3. Properly extract content when the script is executing within the iframe context
@@ -260,7 +287,7 @@ Refused to execute inline script because it violates the following Content Secur
 
 This meant we couldn't use our inline script injection technique to access the global variables directly.
 
-#### Final Solution:
+#### Final Solution
 
 We implemented two key changes that successfully resolved all the issues:
 

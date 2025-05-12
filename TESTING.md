@@ -249,24 +249,3 @@ Test the ability of the extension to generate follow-up questions for a Discord 
 
 **Model(s) Used:**
 - OpenAI GPT-4o
-
----
-
-## Test Case 5: Summarizing Multiple Tickets
-
-**Description:**
-Test the ability of the extension to summarize multiple Discord tickets at once.
-
-**Inputs:**
-- Three Discord tickets, each containing a conversation with 8-12 messages.
-- Prompt: "Summarize these tickets in a single paragraph."
-
-**Expected Outputs:**
-- A single paragraph summarizing the key points from all three tickets.
-
-**Current Behavior:**
-- The extension generates a summary but occasionally omits details from one or more tickets.
-
-**Model(s) Used:**
-- OpenAI GPT-4o
-
