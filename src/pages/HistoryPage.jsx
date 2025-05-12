@@ -1,8 +1,20 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Button from '../ui/Button';
 import ConversationItem from '../components/ConversationItem';
 import ConversationBundle from '../components/ConversationBundle';
 import '../styles/ui.css';
+
+/**
+ * Debounce any fast‐changing value by a given delay.
+ */
+function useDebounce(value, delay) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+}
 
 /**
  * HistoryPage component for showing the conversation history
@@ -14,6 +26,7 @@ export default function HistoryPage() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);   // debounce search by 300ms
   const [timeFilter, setTimeFilter] = useState('all'); // 'all', 'today', 'week', 'month', 'custom'
   const [viewMode, setViewMode] = useState('bundled'); // 'bundled', 'individual'
   const [showDateRange, setShowDateRange] = useState(false);
@@ -179,103 +192,148 @@ export default function HistoryPage() {
     }
   };
 
-  // Filter history by search term and time filter
-  const getFilteredHistory = () => {
-    return history.filter(item => {
-      // Search term filter
-      const matchesSearch = 
-        !searchTerm || 
-        item.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.server_name?.toLowerCase().includes(searchTerm.toLowerCase());
+  // // Filter history by search term and time filter
+  // const getFilteredHistory = () => {
+  //   return history.filter(item => {
+  //     // Search term filter
+  //     const matchesSearch = 
+  //       !searchTerm || 
+  //       item.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //       item.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //       item.server_name?.toLowerCase().includes(searchTerm.toLowerCase());
       
+  //     // Time filter
+  //     let matchesTime = true;
+      
+  //     if (timeFilter === 'custom' && (startDate || endDate)) {
+  //       const itemDate = new Date(item.timestamp);
+        
+  //       if (startDate) {
+  //         const start = new Date(startDate);
+  //         start.setHours(0, 0, 0, 0);
+  //         if (itemDate < start) {
+  //           matchesTime = false;
+  //         }
+  //       }
+        
+  //       if (endDate && matchesTime) {
+  //         const end = new Date(endDate);
+  //         end.setHours(23, 59, 59, 999);
+  //         if (itemDate > end) {
+  //           matchesTime = false;
+  //         }
+  //       }
+  //     } else if (timeFilter !== 'all') {
+  //       const itemDate = new Date(item.timestamp);
+  //       const now = new Date();
+        
+  //       switch(timeFilter) {
+  //         case 'today':
+  //           matchesTime = itemDate.toDateString() === now.toDateString();
+  //           break;
+  //         case 'week':
+  //           const oneWeekAgo = new Date();
+  //           oneWeekAgo.setDate(now.getDate() - 7);
+  //           matchesTime = itemDate >= oneWeekAgo;
+  //           break;
+  //         case 'month':
+  //           const oneMonthAgo = new Date();
+  //           oneMonthAgo.setMonth(now.getMonth() - 1);
+  //           matchesTime = itemDate >= oneMonthAgo;
+  //           break;
+  //         default:
+  //           matchesTime = true;
+  //       }
+  //     }
+      
+  //     return matchesSearch && matchesTime;
+  //   });
+  // };
+
+
+
+  // Memoized, debounced filter
+  const getFilteredHistory = useCallback(() => {
+    const term = debouncedSearchTerm.toLowerCase();
+    return history.filter(item => {
+      // Search filter
+      const content = item.content?.toLowerCase()    || '';
+      const user    = item.username?.toLowerCase()   || '';
+      const server  = item.server_name?.toLowerCase()|| '';
+      const matchesSearch = 
+        !term ||
+        content.includes(term) ||
+        user.includes(term) ||
+        server.includes(term);
+
       // Time filter
       let matchesTime = true;
-      
+      const itemDate = new Date(item.timestamp);
+
       if (timeFilter === 'custom' && (startDate || endDate)) {
-        const itemDate = new Date(item.timestamp);
-        
         if (startDate) {
           const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
-          if (itemDate < start) {
-            matchesTime = false;
-          }
+          start.setHours(0,0,0,0);
+          matchesTime = matchesTime && itemDate >= start;
         }
-        
         if (endDate && matchesTime) {
           const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          if (itemDate > end) {
-            matchesTime = false;
-          }
+          end.setHours(23,59,59,999);
+          matchesTime = itemDate <= end;
         }
       } else if (timeFilter !== 'all') {
-        const itemDate = new Date(item.timestamp);
         const now = new Date();
-        
-        switch(timeFilter) {
+        switch (timeFilter) {
           case 'today':
             matchesTime = itemDate.toDateString() === now.toDateString();
             break;
           case 'week':
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(now.getDate() - 7);
-            matchesTime = itemDate >= oneWeekAgo;
+            const weekAgo = new Date();
+            weekAgo.setDate(now.getDate() - 7);
+            matchesTime = itemDate >= weekAgo;
             break;
           case 'month':
-            const oneMonthAgo = new Date();
-            oneMonthAgo.setMonth(now.getMonth() - 1);
-            matchesTime = itemDate >= oneMonthAgo;
+            const monthAgo = new Date();
+            monthAgo.setMonth(now.getMonth() - 1);
+            matchesTime = itemDate >= monthAgo;
             break;
           default:
             matchesTime = true;
         }
       }
-      
+
       return matchesSearch && matchesTime;
     });
-  };
+  }, [history, debouncedSearchTerm, timeFilter, startDate, endDate]);
 
-  // Group conversations by extraction time or server
+  // Memoized grouping by extraction_time / timestamp
   const groupedConversations = useMemo(() => {
-    const filteredHistory = getFilteredHistory();
-    
-    // Generate groups based on extraction time
+    const filtered = getFilteredHistory();
     const groups = {};
-    
-    filteredHistory.forEach(item => {
-      // Use extraction_time as the primary grouping key, fallback to timestamp
-      const extractionTime = item.extraction_time || item.timestamp || new Date().toISOString();
-      const server = item.server_name || 'Unknown Server';
-      
-      // Create a groupKey based on extraction time
-      const groupKey = extractionTime;
-      
-      if (!groups[groupKey]) {
-        groups[groupKey] = {
-          server_name: server,
-          extractedAt: extractionTime,
+
+    filtered.forEach(item => {
+      const key = item.extraction_time || item.timestamp;
+      if (!groups[key]) {
+        groups[key] = {
+          server_name: item.server_name || 'Unknown Server',
+          extractedAt: key,
           conversations: []
         };
       }
-      
-      groups[groupKey].conversations.push(item);
+      groups[key].conversations.push(item);
     });
-    
-    // Convert to array and sort by extraction time (newest first)
-    return Object.values(groups).sort((a, b) => 
-      new Date(b.extractedAt) - new Date(a.extractedAt)
-    );
-  }, [history, searchTerm, timeFilter, startDate, endDate]);
 
-  // Toggle view mode between bundled and individual
+    return Object.values(groups)
+      .sort((a, b) => new Date(b.extractedAt) - new Date(a.extractedAt));
+  }, [getFilteredHistory]);
+
+  // If need the flat list too
+  const filteredHistory = getFilteredHistory();
+
+  // View toggle handler
   const toggleViewMode = () => {
     setViewMode(viewMode === 'bundled' ? 'individual' : 'bundled');
   };
-
-  
-  const filteredHistory = getFilteredHistory();
 
   return (
     <div className="history-page">
@@ -299,7 +357,7 @@ export default function HistoryPage() {
         </div>
         <div className="metric-card">
           <div className="metric-title">Peak Activity Time</div>
-          <div className="metric-value">{metrics.mostActiveTime || 'N/A'} h</div>
+          <div className="metric-value">{metrics.mostActiveTime || 'N/A'} </div>
         </div>
       </div>
       
