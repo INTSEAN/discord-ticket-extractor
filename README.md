@@ -2,7 +2,7 @@
 
 - **Landing Page:** [Visit here](https://junieguo.github.io/discord-ticket-extractor-landing-page/)
 - **Demo Video:** [Visit here](https://youtu.be/fqZS18wfngM)
-- **Pitching Video:** [Visit here](https://youtu.be/__rOadU_dxI?si=9WXmnAi7qXOM6_BL)
+- **Pitching Video:** [Visit here](https://youtu.be/__rOadU_dxI?si=9WXmnAi7qXOM6_BL) | [Deck](https://docs.google.com/presentation/d/1MWKyhHgI59aVqd06dPVbs-kDaGh05T8RCY0SsRSHP84/edit?usp=sharing)
 
 ## Meet the Team
 
