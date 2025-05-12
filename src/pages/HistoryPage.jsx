@@ -116,6 +116,21 @@ export default function HistoryPage() {
       });
     }
   };
+  /* --------- per‑ticket deleter ---------- */
+  const ticketKeyOf = (row) => row.extraction_time || row.timestamp;   // same rule as background.js
+
+  function clearTicket(key) {
+    if (!window.confirm('Delete this ticket only?')) return;
+
+    chrome.runtime.sendMessage({ action: 'clearTicket', ticketKey: key }, (resp) => {
+      if (resp?.ok) {
+        // optimistic UI update
+        setHistory((prev) => prev.filter((r) => ticketKeyOf(r) !== key));
+        
+        calculateMetrics(history.filter((r) => ticketKeyOf(r) !== key));
+      }
+    });
+  }
 
   // Copy filtered conversations to clipboard
   const copyFilteredConversations = () => {
@@ -286,7 +301,7 @@ export default function HistoryPage() {
       {/* Dashboard metrics */}
       <div className="dashboard-metrics">
         <div className="metric-card">
-          <div className="metric-title">Total Conversations</div>
+          <div className="metric-title">Total Messages</div>
           <div className="metric-value">{metrics.totalConversations}</div>
         </div>
         <div className="metric-card">
@@ -421,6 +436,7 @@ export default function HistoryPage() {
                 conversations={group.conversations}
                 serverName={group.server_name}
                 timestamp={group.extractedAt}
+                onClear={() => clearTicket(group.extractedAt)}
               />
             ))}
           </div>

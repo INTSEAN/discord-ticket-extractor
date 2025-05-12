@@ -141,6 +141,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     sendResponse({ success: true });
   }
+
+  // Clear individual ticket from history
+  if (message.action === 'clearTicket' && message.ticketKey) {
+    chrome.storage.local.get({ history: [] }, ({ history }) => {
+      const updatedHistory = history.filter(
+        (row) => (row.extraction_time || row.timestamp) !== message.ticketKey
+      );
+
+      chrome.storage.local.set({ history: updatedHistory }, () => {
+        console.log(
+          `Ticket ${message.ticketKey} cleared — removed ${
+            history.length - updatedHistory.length
+          } row(s).`
+        );
+
+        chrome.runtime.sendMessage({
+          action: 'ticketCleared',
+          ticketKey: message.ticketKey,
+        });
+
+        sendResponse({
+          ok: true,
+          removed: history.length - updatedHistory.length,
+        });
+      });
+    });
+
+    return true; // keep the channel open for async sendResponse
+  }
   
   // Handle the external history clear message (from history page to sidebar)
   if (message.action === 'historyClearedExternal') {

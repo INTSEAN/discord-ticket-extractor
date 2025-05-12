@@ -22,7 +22,8 @@ export default function ConversationBundle({
   serverName = 'Unknown Server',
   timestamp = '',
   onClick,
-  className = ''
+  className = '',
+  onClear = null
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -124,16 +125,35 @@ export default function ConversationBundle({
             {formattedDate} • {messageCount} message{messageCount !== 1 ? 's' : ''}
           </div>
         </div>
-        
-        <motion.div 
-          animate={{ rotate: isExpanded ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
-          style={{ display: 'flex', alignItems: 'center' }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--luxury-gold)">
-            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-          </svg>
-        </motion.div>
+
+        {/* ───────── Right‑side controls: trash + chevron ───────── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Per‑ticket delete */}
+          {onClear && (
+            <Button
+              variant="icon"
+              title="Delete this ticket"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+            >
+              🗑
+            </Button>
+          )}
+
+          {/* Chevron (expand / collapse) */}
+          <motion.div
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            style={{ display: 'flex', alignItems: 'center' }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--luxury-gold)">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
+            </svg>
+          </motion.div>
+        </div>
+
       </motion.div>
       
       {/* Preview Content (shown when not expanded) */}
@@ -160,8 +180,8 @@ export default function ConversationBundle({
           </div>
         </div>
       )}
-      
-      {/* Expanded Content */}
+
+      {/* Expanded Content (shown when expanded) */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div 
