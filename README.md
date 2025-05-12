@@ -44,7 +44,7 @@ Our Chrome extension streamlines Discord ticket conversations into clean, ready-
 
 ## Requirements
 
-1. A Discord account  
+1. A Discord account. Create an account [here] (https://discord.com/).
 2. A TicketTool transcript **link**. It should start with `https://tickettool.xyz/transcript/`.  
 3. If you do not have one, we provide sample transcript links (need to log in to Discord first):  
    - [Transcript Test 1](https://tickettool.xyz/transcript/v1/1111393507123404860/1367315040302137344/transcript-test-1.html/6821fa9d/6820a91d/5c43312ce72cafd85cbf1f665fba03f8ecc2ca232a993b9c281f35a64cf2e579)  
