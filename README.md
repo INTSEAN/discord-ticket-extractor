@@ -6,29 +6,27 @@
 
 ## Meet the Team
 
-PM + Dev: Cecilia Zhang
+PM + Dev: Cecilia Zhang | [LinkedIn](https://www.linkedin.com/in/cecilia-zhang-9b6aa7190/)
 
 Computer Science @ Bryn Mawr College '25
 
-[LinkedIn](https://www.linkedin.com/in/cecilia-zhang-9b6aa7190/)
+--
 
-Dev: Sean Donovan
+Dev: Sean Donovan | [LinkedIn](https://www.linkedin.com/in/seandonovan-upenn/)
 
 Engineering @ Penn '27
 
-[LinkedIn](https://www.linkedin.com/in/seandonovan-upenn/)
+--
 
-Dev: Junie Guo
+Dev: Junie Guo | [LinkedIn](https://www.linkedin.com/in/junieguo/)
 
 Computer Science + Economics @ Penn '27
 
-[LinkedIn](https://www.linkedin.com/in/junieguo/)
+--
 
-Dev: Garrett Kirsch
+Dev: Garrett Kirsch | [LinkedIn](https://www.linkedin.com/in/garrett-kirsch/)
 
 Computer Engineering @ Penn '27
-
-[LinkedIn](https://www.linkedin.com/in/garrett-kirsch/)
 
 ## Description
 
